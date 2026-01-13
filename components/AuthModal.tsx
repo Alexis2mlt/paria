@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { supabase } from '../services/supabaseService';
 
 interface AuthModalProps {
   onClose: () => void;
-  onAuthSuccess: () => void;
+  onAuthSuccess: (email?: string) => void;
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuthSuccess }) => {
@@ -19,20 +18,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuthSuccess }) => {
     setError(null);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
+      // No backend: simulate success
+      if (!email || !password) {
+        throw new Error('Email et mot de passe requis');
       }
-      onAuthSuccess();
+      await new Promise((res) => setTimeout(res, 500));
+      onAuthSuccess(email);
       onClose();
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue');

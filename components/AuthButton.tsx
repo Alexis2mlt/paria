@@ -1,47 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../services/supabaseService';
+import React, { useState } from 'react';
 import AuthModal from './AuthModal';
-import type { User } from '@supabase/supabase-js';
 
 const AuthButton: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Vérifier l'utilisateur actuel
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    // Écouter les changements d'authentification
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleAuthSuccess = (email?: string) => {
+    if (email) setUserEmail(email);
+    setShowModal(false);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2">
-        <div className="w-20 h-6 bg-slate-100 animate-pulse rounded-full"></div>
-      </div>
-    );
-  }
+  const handleLogout = () => {
+    setUserEmail(null);
+  };
 
-  if (user) {
+  if (userEmail) {
     return (
       <div className="flex items-center gap-3">
         <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest">
-          {user.email?.split('@')[0]}
+          {userEmail.split('@')[0]}
         </span>
         <button
           onClick={handleLogout}
@@ -64,7 +41,7 @@ const AuthButton: React.FC = () => {
       {showModal && (
         <AuthModal
           onClose={() => setShowModal(false)}
-          onAuthSuccess={() => setShowModal(false)}
+          onAuthSuccess={handleAuthSuccess}
         />
       )}
     </>
