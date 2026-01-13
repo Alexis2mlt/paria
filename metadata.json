@@ -1,0 +1,7 @@
+{
+  "name": "PARIA - Football Betting Data Scientist",
+  "description": "Expert statistical engineering and data-science application for high-level football betting analysis.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
