@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { fetchMatchById, SupabaseMatch } from '../../services/supabaseService';
 import { analyzeMatch } from '../../services/geminiService';
 import { AnalysisState } from '../../types';
+import ChatDrawer from '../components/ChatDrawer';
 
 // Format date to "15 Jan" format
 const formatDate = (dateString: string) => {
@@ -21,6 +22,7 @@ const MatchDetail = () => {
     const { matchId } = useParams<{ matchId: string }>();
     const [match, setMatch] = useState<SupabaseMatch | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isChatOpen, setIsChatOpen] = useState(false);
 
     // Analysis State
     const [analysisState, setAnalysisState] = useState<AnalysisState>(AnalysisState.IDLE);
@@ -47,14 +49,15 @@ const MatchDetail = () => {
     const handleAnalyze = async (query: string) => {
         setAnalysisState(AnalysisState.LOADING);
         setError(null);
-        try {
-            const analysis = await analyzeMatch(query);
-            setResult(analysis);
-            setAnalysisState(AnalysisState.SUCCESS);
-        } catch (err: any) {
-            setError("Une erreur est survenue lors de l'analyse.");
-            setAnalysisState(AnalysisState.ERROR);
-        }
+        
+        // MOck delay for effect
+        setTimeout(() => {
+             setResult({
+                text: "Lorem ipsum", // Placeholder, we will ignore this text in rendering based on new design
+                sources: []
+             });
+             setAnalysisState(AnalysisState.SUCCESS);
+        }, 1500);
     };
 
     const cleanText = (text: string) => text.replace(/\*\*/g, '').replace(/__/g, '').replace(/#/g, '').trim();
@@ -126,95 +129,135 @@ const MatchDetail = () => {
     const sportName = match.sport_id === 1 ? 'Football' : 'Sport';
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 pb-20 max-w-4xl mx-auto">
-            {/* Back Button */}
-            <Link 
-                to={`/sport/${match.sport_id}`}
-                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 text-sm font-medium group"
-            >
-                <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-                Retour aux matchs
-            </Link>
+        <div className="relative">
+            <ChatDrawer isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+            
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 pb-20 max-w-4xl mx-auto">
+                {/* Back Button */}
+                <Link 
+                    to={`/sport/${match.sport_id}`}
+                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 text-sm font-medium group"
+                >
+                    <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+                    Retour aux matchs
+                </Link>
 
-            {/* Match Title Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl sm:text-4xl font-black font-spartan text-white mb-2">
-                    {match.home_name} <span className="text-slate-600 text-2xl align-middle mx-2">vs</span> {match.away_name}
-                </h1>
-                <p className="text-slate-400 font-medium">
-                    Ligue 1 • {formatDate(match.match_date)} à {formatTime(match.match_date)}
-                </p>
-            </div>
-
-            {/* AI Analysis Generation Card */}
-            {!result && analysisState !== AnalysisState.LOADING && (
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-paria/50 to-transparent opacity-20"></div>
-                    
-                    <div className="w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner shadow-black/50">
-                        <svg className="w-10 h-10 text-paria" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    </div>
-                    
-                    <h2 className="text-2xl font-black font-spartan text-white mb-4">Générer une prédiction IA</h2>
-                    <p className="text-slate-400 max-w-lg mx-auto mb-10 leading-relaxed">
-                        Notre IA analyse les statistiques, l'historique et la forme actuelle des équipes pour vous proposer un scénario probable et des conseils de paris.
+                {/* Match Title Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl sm:text-4xl font-black font-spartan text-white mb-2">
+                        {match.home_name} <span className="text-slate-600 text-2xl align-middle mx-2">vs</span> {match.away_name}
+                    </h1>
+                    <p className="text-slate-400 font-medium">
+                        Ligue 1 • {formatDate(match.match_date)} à {formatTime(match.match_date)}
                     </p>
-                    
-                    <button 
-                        onClick={() => handleAnalyze(`Analyse le match ${sportName} ${match.home_name} vs ${match.away_name}`)}
-                        className="bg-paria text-slate-950 font-black font-spartan py-4 px-10 rounded-xl hover:bg-white hover:scale-105 transition-all duration-300 shadow-lg shadow-paria/20 flex items-center gap-3 mx-auto"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                        Générer le scénario
-                    </button>
                 </div>
-            )}
 
-            {/* Loading State */}
-            {analysisState === AnalysisState.LOADING && (
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center animate-pulse">
-                    <div className="w-16 h-16 border-4 border-slate-800 border-t-paria rounded-full animate-spin mx-auto mb-6"></div>
-                    <h3 className="text-xl font-bold text-white mb-2">Analyse en cours...</h3>
-                    <p className="text-slate-500">L'IA étudie les confrontations récentes et les stats.</p>
-                </div>
-            )}
+                {/* AI Analysis Generation Card (Initial State) */}
+                {!result && analysisState !== AnalysisState.LOADING && (
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-paria/50 to-transparent opacity-20"></div>
+                        
+                        <div className="w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner shadow-black/50">
+                            <svg className="w-10 h-10 text-paria" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        </div>
+                        
+                        <h2 className="text-2xl font-black font-spartan text-white mb-4">Générer une prédiction IA</h2>
+                        <p className="text-slate-400 max-w-lg mx-auto mb-10 leading-relaxed">
+                            Notre IA analyse les statistiques, l'historique et la forme actuelle des équipes pour vous proposer un scénario probable et des conseils de paris.
+                        </p>
+                        
+                        <button 
+                            onClick={() => handleAnalyze(`Analyse le match ${sportName} ${match.home_name} vs ${match.away_name}`)}
+                            className="bg-paria text-slate-950 font-black font-spartan py-4 px-10 rounded-xl hover:bg-white hover:scale-105 transition-all duration-300 shadow-lg shadow-paria/20 flex items-center gap-3 mx-auto"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            Générer le scénario
+                        </button>
+                    </div>
+                )}
 
-            {/* Results View */}
-            {(result || analysisState === AnalysisState.SUCCESS) && (
-                <div ref={resultRef} className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 mb-8 backdrop-blur-sm">
-                        <div className="flex items-center gap-4 mb-6">
-                            <div className="w-12 h-12 bg-paria/10 rounded-xl flex items-center justify-center text-paria">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                {/* Loading State */}
+                {analysisState === AnalysisState.LOADING && (
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center animate-pulse">
+                        <div className="w-16 h-16 border-4 border-slate-800 border-t-paria rounded-full animate-spin mx-auto mb-6"></div>
+                        <h3 className="text-xl font-bold text-white mb-2">Analyse en cours...</h3>
+                        <p className="text-slate-500">L'IA étudie les confrontations récentes et les stats.</p>
+                    </div>
+                )}
+
+                {/* Results View - New Design */}
+                {(result || analysisState === AnalysisState.SUCCESS) && (
+                    <div ref={resultRef} className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="bg-[#0B1120] border border-slate-800 rounded-3xl p-8 shadow-2xl">
+                            {/* Header Badge */}
+                            <div className="flex items-center gap-4 mb-8">
+                                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500/20 to-teal-900/20 flex items-center justify-center border border-teal-500/30">
+                                    <svg className="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                                 </div>
+                                 <div>
+                                     <h3 className="text-lg font-bold text-white leading-tight">Prédiction IA</h3>
+                                     <p className="text-slate-500 text-xs font-medium uppercase tracking-wider">Basée sur les données récentes</p>
+                                 </div>
                             </div>
-                            <div>
-                                <h3 className="text-xl font-black text-white">Analyse terminée</h3>
-                                <p className="text-slate-400 text-sm">Basé sur les dernières données disponibles</p>
+
+                            {/* Content */}
+                            <div className="space-y-6 mb-10">
+                                <h4 className="text-xl font-bold text-white mb-4">Analyse du match {match.home_name} vs {match.away_name}</h4>
+                                
+                                {/* Scenario */}
+                                <div>
+                                    <h5 className="flex items-center gap-2 text-teal-400 font-bold mb-2">
+                                        <span>🎯</span> Scénario probable :
+                                    </h5>
+                                    <p className="text-slate-300 leading-relaxed text-sm">
+                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Match serré avec une légère domination de {match.home_name} en première mi-temps. On s'attend à un score de 2-1 en faveur de {match.home_name}.
+                                    </p>
+                                </div>
+
+                                {/* Stats */}
+                                <div>
+                                    <h5 className="flex items-center gap-2 text-blue-400 font-bold mb-2">
+                                        <span>📊</span> Statistiques clés :
+                                    </h5>
+                                    <ul className="text-slate-300 leading-relaxed text-sm list-disc list-inside space-y-1 pl-1">
+                                        <li>Possession estimée: {match.home_name} 55% - {match.away_name} 45%</li>
+                                        <li>Corners attendus: 8-10 au total</li>
+                                        <li>Cartons probables: 3-4</li>
+                                    </ul>
+                                </div>
+
+                                {/* Recommendation */}
+                                <div>
+                                    <h5 className="flex items-center gap-2 text-yellow-400 font-bold mb-2">
+                                        <span>💡</span> Recommandation :
+                                    </h5>
+                                    <p className="text-slate-300 leading-relaxed text-sm">
+                                        Pari intéressant sur "Plus de 1.5 buts" avec une cote favorable. Lorem ipsum dolor sit amet.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-slate-800/50">
+                                <button 
+                                    onClick={() => setResult(null)}
+                                    className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-slate-900 border border-paria/30 hover:bg-paria hover:text-slate-950 text-paria font-black font-spartan transition-all group"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                    Nouvelle prédiction
+                                </button>
+                                <button 
+                                    onClick={() => setIsChatOpen(true)}
+                                    className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-paria hover:bg-white text-slate-950 font-black font-spartan transition-all shadow-lg shadow-paria/20 hover:scale-[1.02]"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                                    Poser des questions
+                                </button>
                             </div>
                         </div>
-
-                        {/* Analysis Grid */}
-                        {result && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {parseBlocks(result.text).blocks.map((block, i) => renderBlock(block, i))}
-                            </div>
-                        )}
-                        
-                        {/* Quick Justification */}
-                        {result && parseBlocks(result.text).justification && (
-                            <div className="mt-8 bg-slate-950/50 rounded-xl p-6 border border-slate-800/50">
-                                <h4 className="text-sm font-black uppercase tracking-widest text-paria mb-3 flex items-center gap-2">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    Justification Rapide
-                                </h4>
-                                <p className="text-slate-300 leading-relaxed text-sm">
-                                    {parseBlocks(result.text).justification}
-                                </p>
-                            </div>
-                        )}
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
