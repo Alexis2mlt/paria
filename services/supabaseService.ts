@@ -113,6 +113,36 @@ export const fetchAllMatches = async (): Promise<SupabaseMatch[]> => {
 	}
 };
 
+export const fetchMatchById = async (id: number): Promise<SupabaseMatch | null> => {
+	const SUPABASE_URL = `https://lfmdvopbdldxisnobwqj.supabase.co/rest/v1/matches?id=eq.${id}&select=*`;
+	const API_KEY = "sb_publishable_jlz0JQrd76qt4mlnzs-uWA_WanyOsQR";
+
+	if (!SUPABASE_URL) {
+		return new Promise(resolve => setTimeout(() => resolve(MOCK_MATCHES.find(m => m.id === id) || null), 500));
+	}
+
+	try {
+		const response = await fetch(SUPABASE_URL, {
+			method: "GET",
+			headers: {
+				"apikey": API_KEY,
+				"Authorization": `Bearer ${API_KEY}`,
+				"Content-Type": "application/json"
+			}
+		});
+
+		if (!response.ok) {
+			throw new Error(`Error fetching match: ${response.statusText}`);
+		}
+
+		const data = await response.json();
+		return data.length > 0 ? data[0] : null;
+	} catch (error) {
+		console.error("Failed to fetch match:", error);
+		return MOCK_MATCHES.find(m => m.id === id) || null;
+	}
+};
+
 export const extractLogos = (matchData: string): { homeLogo: string, awayLogo: string } => {
 	const homeLogoMatch = matchData.match(/Home:.*?- Logo: (http[^\n]+)/s);
 	const awayLogoMatch = matchData.match(/Away:.*?- Logo: (http[^\n]+)/s);
