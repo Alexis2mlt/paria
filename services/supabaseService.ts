@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js';
 
 export interface SupabaseMatch {
 	id: number;
@@ -81,31 +82,16 @@ const MOCK_MATCHES: SupabaseMatch[] = [
 	}
 ];
 
+const SUPABASE_URL = "https://lfmdvopbdldxisnobwqj.supabase.co";
+const API_KEY = "sb_publishable_jlz0JQrd76qt4mlnzs-uWA_WanyOsQR";
+
+export const supabase = createClient(SUPABASE_URL, API_KEY);
+
 export const fetchAllMatches = async (): Promise<SupabaseMatch[]> => {
-	const SUPABASE_URL = "https://lfmdvopbdldxisnobwqj.supabase.co/rest/v1/matches?select=*";
-	const API_KEY = "sb_publishable_jlz0JQrd76qt4mlnzs-uWA_WanyOsQR"; // Provided by user
-
-	if (!SUPABASE_URL) {
-		console.warn("Supabase URL is missing. Returning mock data.");
-		return new Promise(resolve => setTimeout(() => resolve(MOCK_MATCHES), 500));
-	}
-
 	try {
-		const response = await fetch(SUPABASE_URL, {
-			method: "GET",
-			headers: {
-				"apikey": API_KEY,
-				"Authorization": `Bearer ${API_KEY}`,
-				"Content-Type": "application/json"
-			}
-		});
-
-		if (!response.ok) {
-			throw new Error(`Error fetching matches: ${response.statusText}`);
-		}
-
-		const data = await response.json();
-		return data;
+		const { data, error } = await supabase.from('matches').select('*');
+		if (error) throw error;
+		return data as SupabaseMatch[];
 	} catch (error) {
 		console.error("Failed to fetch matches:", error);
 		// Fallback to mock data for demo purposes
@@ -114,29 +100,10 @@ export const fetchAllMatches = async (): Promise<SupabaseMatch[]> => {
 };
 
 export const fetchMatchById = async (id: number): Promise<SupabaseMatch | null> => {
-	const SUPABASE_URL = `https://lfmdvopbdldxisnobwqj.supabase.co/rest/v1/matches?id=eq.${id}&select=*`;
-	const API_KEY = "sb_publishable_jlz0JQrd76qt4mlnzs-uWA_WanyOsQR";
-
-	if (!SUPABASE_URL) {
-		return new Promise(resolve => setTimeout(() => resolve(MOCK_MATCHES.find(m => m.id === id) || null), 500));
-	}
-
 	try {
-		const response = await fetch(SUPABASE_URL, {
-			method: "GET",
-			headers: {
-				"apikey": API_KEY,
-				"Authorization": `Bearer ${API_KEY}`,
-				"Content-Type": "application/json"
-			}
-		});
-
-		if (!response.ok) {
-			throw new Error(`Error fetching match: ${response.statusText}`);
-		}
-
-		const data = await response.json();
-		return data.length > 0 ? data[0] : null;
+		const { data, error } = await supabase.from('matches').select('*').eq('id', id).single();
+		if (error) throw error;
+		return data as SupabaseMatch;
 	} catch (error) {
 		console.error("Failed to fetch match:", error);
 		return MOCK_MATCHES.find(m => m.id === id) || null;
@@ -152,4 +119,19 @@ export const extractLogos = (matchData: string): { homeLogo: string, awayLogo: s
 	const awayLogo = awayLogoMatch ? awayLogoMatch[1].trim() : "";
 
 	return { homeLogo, awayLogo };
+};
+
+// Auth Helper Functions
+export const signInUser = async (email: string) => {
+	// Note: The user provided a "grant_type=password" link which implies password login.
+	// However, for this step, we will use the standard simple auth or Magic Link if password is not set up.
+	// But typical use case is password.
+	// Given the prompt "login functionally with this link ... token?grant_type=password", 
+	// it strongly suggests we should implement password login (signInWithPassword).
+	// Use a placeholder password since we don't know the implementation details of the user's backend fully,
+	// OR just pass the password from the UI.
+
+	// We will update this to take password from UI.
+	// For now, let's just export the supabase client mainly.
+	return {};
 };

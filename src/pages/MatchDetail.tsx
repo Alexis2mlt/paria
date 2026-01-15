@@ -18,6 +18,42 @@ const formatTime = (dateString: string) => {
 };
 
 
+// Custom Markdown Formatter
+const FormattedText = ({ text }: { text: string }) => {
+    if (!text) return null;
+    
+    return (
+        <div className="space-y-4">
+            {text.split('\n').map((line, index) => {
+                // Headers (###)
+                if (line.trim().startsWith('###')) {
+                    return (
+                        <h5 key={index} className="text-lg font-bold text-white mt-6 mb-2">
+                            {line.replace(/^###\s*/, '')}
+                        </h5>
+                    );
+                }
+                
+                // Normal paragraph with bold parsing
+                if (line.trim() === '') return <br key={index} />;
+
+                const parts = line.split(/(\*\*.*?\*\*)/g);
+                
+                return (
+                    <p key={index} className="min-h-[1rem]">
+                        {parts.map((part, i) => {
+                            if (part.startsWith('**') && part.endsWith('**')) {
+                                return <strong key={i} className="text-white font-bold">{part.slice(2, -2)}</strong>;
+                            }
+                            return part;
+                        })}
+                    </p>
+                );
+            })}
+        </div>
+    );
+};
+
 const MatchDetail = () => {
     const { matchId } = useParams<{ matchId: string }>();
     const [match, setMatch] = useState<SupabaseMatch | null>(null);
@@ -50,14 +86,49 @@ const MatchDetail = () => {
         setAnalysisState(AnalysisState.LOADING);
         setError(null);
         
-        // MOck delay for effect
-        setTimeout(() => {
-             setResult({
-                text: "Lorem ipsum", // Placeholder, we will ignore this text in rendering based on new design
-                sources: []
-             });
-             setAnalysisState(AnalysisState.SUCCESS);
-        }, 1500);
+        try {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                // If no token, maybe we should prompt login, but for now just error specific message
+                throw new Error("Vous devez être connecté pour générer une prédiction.");
+            }
+
+            const sport = match?.sport_id === 1 ? 'Football' : match?.sport_id === 2 ? 'Rugby' : 'Sport';
+
+            const response = await fetch('/api/webhook/c7efaf8e-a5d6-4233-a514-ce2c7ab9b1df', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    type: "button",
+                    sport: sport,
+                    message: "Quel est le prono de ce match",
+                    matchId: match?.id
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erreur réseau: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            // Try to extract the text from various common properties
+            const predictionText = data.prediction || data.content || data.output || data.text || data.message || (typeof data === 'string' ? data : JSON.stringify(data));
+
+            setResult({
+                text: predictionText,
+                sources: [] 
+            });
+            setAnalysisState(AnalysisState.SUCCESS);
+
+        } catch (err: any) {
+            console.error("Analysis failed:", err);
+            setError(err.message || "Impossible de générer la prédiction");
+            setAnalysisState(AnalysisState.ERROR);
+        }
     };
 
     const cleanText = (text: string) => text.replace(/\*\*/g, '').replace(/__/g, '').replace(/#/g, '').trim();
@@ -201,40 +272,9 @@ const MatchDetail = () => {
                             </div>
 
                             {/* Content */}
-                            <div className="space-y-6 mb-10">
-                                <h4 className="text-xl font-bold text-white mb-4">Analyse du match {match.home_name} vs {match.away_name}</h4>
-                                
-                                {/* Scenario */}
-                                <div>
-                                    <h5 className="flex items-center gap-2 text-teal-400 font-bold mb-2">
-                                        <span>🎯</span> Scénario probable :
-                                    </h5>
-                                    <p className="text-slate-300 leading-relaxed text-sm">
-                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Match serré avec une légère domination de {match.home_name} en première mi-temps. On s'attend à un score de 2-1 en faveur de {match.home_name}.
-                                    </p>
-                                </div>
-
-                                {/* Stats */}
-                                <div>
-                                    <h5 className="flex items-center gap-2 text-blue-400 font-bold mb-2">
-                                        <span>📊</span> Statistiques clés :
-                                    </h5>
-                                    <ul className="text-slate-300 leading-relaxed text-sm list-disc list-inside space-y-1 pl-1">
-                                        <li>Possession estimée: {match.home_name} 55% - {match.away_name} 45%</li>
-                                        <li>Corners attendus: 8-10 au total</li>
-                                        <li>Cartons probables: 3-4</li>
-                                    </ul>
-                                </div>
-
-                                {/* Recommendation */}
-                                <div>
-                                    <h5 className="flex items-center gap-2 text-yellow-400 font-bold mb-2">
-                                        <span>💡</span> Recommandation :
-                                    </h5>
-                                    <p className="text-slate-300 leading-relaxed text-sm">
-                                        Pari intéressant sur "Plus de 1.5 buts" avec une cote favorable. Lorem ipsum dolor sit amet.
-                                    </p>
-                                </div>
+                            {/* Content */}
+                            <div className="mb-10 text-slate-300 leading-relaxed text-sm">
+                                <FormattedText text={result.text} />
                             </div>
 
                             {/* Action Buttons */}

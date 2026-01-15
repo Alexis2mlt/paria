@@ -45,6 +45,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuthSuccess }) => {
          return;
       }
       
+      if (data.session) {
+         localStorage.setItem('access_token', data.session.access_token);
+      }
+
       if (data.user) {
          onAuthSuccess(data.user.email);
          onClose();
