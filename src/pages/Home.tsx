@@ -17,12 +17,12 @@ const Home = () => {
     }, []);
 
     const sports = [
-        { name: 'Football', id: 1, count: sportCounts[1], icon: <><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></> },
-        { name: 'Rugby', id: 2, count: sportCounts[2], icon: <><path d="M12 2c5 0 9 4 9 10s-4 10-9 10-9-4-9-10 4-10 9-10z" /><path d="M12 2c2 4 2 16 0 20" /><path d="M2 12h20" /></> }, 
-        { name: 'Basketball', id: null, count: 0, icon: <><circle cx="12" cy="12" r="10"/><line x1="14.3" y1="2.1" x2="8.4" y2="21.5"/><path d="M5.6 5.6l12.8 12.8"/><path d="M18.4 5.6L5.6 18.4"/></> },
-        { name: 'Tennis', id: null, count: 0, icon: <><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></> },
-        { name: 'Natation', id: null, count: 0, icon: <><path d="M2 12c.6 0 1.2.5 2 1s1.4.5 2 0 1.2-.5 2-1 1.4-.5 2 0 1.2.5 2 1 1.4.5 2 0"/><path d="M2 16c.6 0 1.2.5 2 1s1.4.5 2 0 1.2-.5 2-1 1.4-.5 2 0 1.2.5 2 1 1.4.5 2 0"/><path d="M2 8c.6 0 1.2.5 2 1s1.4.5 2 0 1.2-.5 2-1 1.4-.5 2 0 1.2.5 2 1 1.4.5 2 0"/></> },
-        { name: 'MMA', id: null, count: 0, icon: <><path d="M14.5 2L10 10l-4-4"/><path d="M8.5 2L12 10l5 5"/><path d="M12 22l-4-4"/><path d="M4 14l8 8"/></> },
+        { name: 'Football', id: 1, count: sportCounts[1], icon: "⚽" },
+        { name: 'Rugby', id: 2, count: sportCounts[2], icon: "🏉" }, 
+        { name: 'Basketball', id: null, count: 0, icon: "🏀" },
+        { name: 'Tennis', id: null, count: 0, icon: "🎾" },
+        { name: 'Natation', id: null, count: 0, icon: "🏊" },
+        { name: 'MMA', id: null, count: 0, icon: "🥊" },
     ];
 
     return (
@@ -48,9 +48,9 @@ const Home = () => {
                     >
                         <div className="flex flex-col items-center justify-center text-center gap-4">
                             <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center group-hover:bg-paria/10 transition-colors">
-                                <svg className="w-8 h-8 text-slate-400 group-hover:text-paria transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <span className="text-3xl filter grayscale group-hover:grayscale-0 transition-all duration-300">
                                     {s.icon}
-                                </svg>
+                                </span>
                             </div>
                             <div>
                                 <h3 className="text-xl font-black font-spartan text-white mb-1">{s.name}</h3>
@@ -64,9 +64,9 @@ const Home = () => {
                             {/* Face Avant (Désactivée) */}
                             <div className="relative h-full bg-slate-900/50 border border-slate-800 rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-4 [backface-visibility:hidden]">
                                 <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center">
-                                    <svg className="w-8 h-8 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <span className="text-3xl filter grayscale opacity-50">
                                         {s.icon}
-                                    </svg>
+                                    </span>
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-black font-spartan text-slate-500 mb-1">{s.name}</h3>
