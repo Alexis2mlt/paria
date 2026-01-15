@@ -84,6 +84,7 @@ const MatchDetail = () => {
 
     const handleAnalyze = async (query: string) => {
         setAnalysisState(AnalysisState.LOADING);
+        setResult(null);
         setError(null);
         
         try {
@@ -280,7 +281,7 @@ const MatchDetail = () => {
                             {/* Action Buttons */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-slate-800/50">
                                 <button 
-                                    onClick={() => setResult(null)}
+                                    onClick={() => handleAnalyze(`Analyse le match ${sportName} ${match.home_name} vs ${match.away_name}`)}
                                     className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-slate-900 border border-paria/30 hover:bg-paria hover:text-slate-950 text-paria font-black font-spartan transition-all group"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
