@@ -59,19 +59,30 @@ const Home = () => {
                         </div>
                     </Link>
                  ) : (
-                    <div 
-                        key={s.name} 
-                        className="group relative overflow-hidden bg-slate-900 border border-slate-800 rounded-3xl p-8 transition-all duration-300 text-left opacity-50 cursor-not-allowed"
-                    >
-                        <div className="flex flex-col items-center justify-center text-center gap-4">
-                            <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center transition-colors">
-                                <svg className="w-8 h-8 text-slate-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    {s.icon}
-                                </svg>
+                    <div key={s.name} className="group h-full [perspective:1000px] cursor-default">
+                        <div className="relative h-full w-full transition-all duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                            {/* Face Avant (Désactivée) */}
+                            <div className="relative h-full bg-slate-900/50 border border-slate-800 rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-4 [backface-visibility:hidden]">
+                                <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center">
+                                    <svg className="w-8 h-8 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        {s.icon}
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black font-spartan text-slate-500 mb-1">{s.name}</h3>
+                                    <p className="text-xs font-bold text-slate-600 uppercase tracking-widest">{s.count ?? 0} matchs disponibles</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-xl font-black font-spartan text-white mb-1">{s.name}</h3>
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest transition-colors">{s.count ?? 0} matchs disponibles</p>
+                            
+                            {/* Face Arrière (Message) */}
+                            <div className="absolute inset-0 h-full w-full bg-[#0B1120] border border-paria/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center [transform:rotateY(180deg)] [backface-visibility:hidden] shadow-[0_0_30px_-10px_rgba(34,197,94,0.2)]">
+                                <div className="w-12 h-12 rounded-full bg-paria/10 flex items-center justify-center mb-3">
+                                    <svg className="w-6 h-6 text-paria" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                                <h3 className="text-white font-bold font-spartan text-sm uppercase tracking-widest leading-relaxed">
+                                    Arrive<br/>
+                                    <span className="text-paria">Prochainement</span>
+                                </h3>
                             </div>
                         </div>
                     </div>

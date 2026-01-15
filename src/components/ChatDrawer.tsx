@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 interface ChatDrawerProps {
     isOpen: boolean;
     onClose: () => void;
+    matchId?: number;
+    sportName?: string;
 }
 
 interface Message {
@@ -11,7 +13,7 @@ interface Message {
     sender: 'user' | 'ai';
 }
 
-const ChatDrawer: React.FC<ChatDrawerProps> = ({ isOpen, onClose }) => {
+const ChatDrawer: React.FC<ChatDrawerProps> = ({ isOpen, onClose, matchId, sportName }) => {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
@@ -32,7 +34,7 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({ isOpen, onClose }) => {
         }
     }, [messages, isOpen]);
 
-    const handleSendMessage = (text: string) => {
+    const handleSendMessage = async (text: string) => {
         if (!text.trim()) return;
 
         const newMessage: Message = {
@@ -44,15 +46,71 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({ isOpen, onClose }) => {
         setMessages(prev => [...prev, newMessage]);
         setInputValue("");
         
-        // Mock AI response for now (to be replaced with Ollama later)
-        setTimeout(() => {
-             const aiResponse: Message = {
-                id: (Date.now() + 1).toString(),
-                text: "Désolé, je ne suis pas encore connecté à mon cerveau (Ollama). Mais j'ai bien reçu : " + text,
-                sender: 'ai'
-            };
-            setMessages(prev => [...prev, aiResponse]);
-        }, 1000);
+        // Show loading state placeholder
+        const loadingId = (Date.now() + 1).toString();
+        setMessages(prev => [...prev, {
+            id: loadingId,
+            text: "...",
+            sender: 'ai'
+        }]);
+
+        try {
+             const token = localStorage.getItem('access_token');
+             if (!token) {
+                 throw new Error("Vous devez être connecté.");
+             }
+             
+             // Use the same sport logic as in MatchDetail but passed via props or derived?
+             // Need props: matchId, sportId/Name. 
+             // Ideally we shouldn't rely on localStorage here if we can avoid it but user asked for it.
+             
+             const response = await fetch('/api/webhook/c7efaf8e-a5d6-4233-a514-ce2c7ab9b1df', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    type: "chat",
+                    sport: sportName || "Football", // Fallback
+                    message: text,
+                    matchId: matchId
+                })
+            });
+
+            if (!response.ok) {
+                const errText = await response.text(); 
+                throw new Error(`Erreur ${response.status}`); 
+            }
+
+            const textResponse = await response.text();
+            let aiText = "Je n'ai pas compris.";
+
+            try {
+                const data = JSON.parse(textResponse);
+                aiText = data.response || data.output || data.text || data.message || data.prediction || JSON.stringify(data);
+            } catch (e) {
+                console.warn("Réponse non-JSON reçue:", textResponse);
+                // If it fails to parse but looks like it attempted to be JSON, tell the user specific debug info
+                if (textResponse.trim().startsWith('{')) {
+                     aiText = `Erreur format JSON de n8n: ${textResponse}`;
+                } else {
+                    // Otherwise assume it's just plain text response
+                    aiText = textResponse;
+                }
+            }
+
+            // Replace loading message with real response
+            setMessages(prev => prev.map(msg => 
+                msg.id === loadingId ? { ...msg, text: aiText } : msg
+            ));
+
+        } catch (error: any) {
+            console.error("Chat Error:", error);
+            setMessages(prev => prev.map(msg => 
+                msg.id === loadingId ? { ...msg, text: `Erreur: ${error.message || "Problème technique"}` } : msg
+            ));
+        }
     };
 
     if (!isOpen) return null;
@@ -117,7 +175,15 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({ isOpen, onClose }) => {
                                         ? 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'
                                         : 'bg-paria text-slate-950 font-medium rounded-tr-none'
                                 }`}>
-                                    {msg.text}
+                                    {msg.text === "..." ? (
+                                        <div className="flex items-center gap-1 h-5 px-1">
+                                            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
+                                        </div>
+                                    ) : (
+                                        msg.text
+                                    )}
                                 </div>
                             </div>
                         </div>

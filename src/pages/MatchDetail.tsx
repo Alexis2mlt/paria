@@ -198,11 +198,16 @@ const MatchDetail = () => {
     }
 
     // Determine sport name (basic check for now)
-    const sportName = match.sport_id === 1 ? 'Football' : 'Sport';
+    const sportName = match.sport_id === 1 ? 'Football' : match.sport_id === 2 ? 'Rugby' : 'Sport';
 
     return (
         <div className="relative">
-            <ChatDrawer isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+            <ChatDrawer 
+                isOpen={isChatOpen} 
+                onClose={() => setIsChatOpen(false)} 
+                matchId={match?.id}
+                sportName={sportName}
+            />
             
             <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 pb-20 max-w-4xl mx-auto">
                 {/* Back Button */}
