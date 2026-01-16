@@ -153,6 +153,31 @@ export const extractLeague = (data: string, sportId: number): string => {
 	return 'COMPETITION';
 };
 
+export const isUpcomingMatch = (match: SupabaseMatch): boolean => {
+	// Check specifically for "period": "preMatch" or period=preMatch as requested
+	// This covers both JSON-like strings and the custom text format we observed
+	if (match.data) {
+		const text = match.data.toLowerCase();
+		if (text.includes('period=prematch') || text.includes('"period": "prematch"') || text.includes('"periode": "prematch"')) {
+			return true;
+		}
+		// If it has a specific period status check that is NOT preMatch, return false
+		// e.g. period=fullTime, period=started, etc.
+		if (text.includes('period=') || text.includes('"period":')) {
+			if (!text.includes('prematch')) {
+				return false;
+			}
+		}
+	}
+
+	// Fallback for matches without explicit status data (e.g. Rugby which might just be a URL)
+	// or if the data doesn't contain period info
+	const matchDate = new Date(match.match_date);
+	const now = new Date();
+	// Keep matches from today onwards (including matches currently playing if no status field says otherwise)
+	return matchDate > now;
+};
+
 // Auth Helper Functions
 export const signInUser = async (email: string) => {
 	// Note: The user provided a "grant_type=password" link which implies password login.

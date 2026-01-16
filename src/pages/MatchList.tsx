@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { fetchAllMatches, SupabaseMatch, extractLogos, extractLeague } from '../../services/supabaseService';
+import { fetchAllMatches, SupabaseMatch, extractLogos, extractLeague, isUpcomingMatch } from '../../services/supabaseService';
 
 // Format date to "15 Jan" format
 const formatDate = (dateString: string) => {
@@ -34,7 +34,15 @@ const MatchList = () => {
     useEffect(() => {
         if (sportId) {
             fetchAllMatches().then(data => {
-                const filtered = data.filter(m => m.sport_id === parseInt(sportId));
+                // Filter by sport
+                let filtered = data.filter(m => m.sport_id === parseInt(sportId));
+                
+                // Filter for upcoming matches (preMatch)
+                filtered = filtered.filter(isUpcomingMatch);
+                
+                // Sort chronologically (soonest first)
+                filtered.sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime());
+
                 setMatches(filtered);
             });
         }

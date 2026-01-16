@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchAllMatches, SupabaseMatch } from '../../services/supabaseService';
+import { fetchAllMatches, SupabaseMatch, isUpcomingMatch } from '../../services/supabaseService';
 
 const Home = () => {
     const [sportCounts, setSportCounts] = useState<{ [key: number]: number }>({ 1: 0, 2: 0 });
@@ -9,8 +9,10 @@ const Home = () => {
         fetchAllMatches().then(data => {
             const counts: { [key: number]: number } = { 1: 0, 2: 0 };
             data.forEach(m => {
-                if (m.sport_id === 1) counts[1] = (counts[1] || 0) + 1;
-                if (m.sport_id === 2) counts[2] = (counts[2] || 0) + 1;
+                if (isUpcomingMatch(m)) {
+                    if (m.sport_id === 1) counts[1] = (counts[1] || 0) + 1;
+                    if (m.sport_id === 2) counts[2] = (counts[2] || 0) + 1;
+                }
             });
             setSportCounts(counts);
         });
