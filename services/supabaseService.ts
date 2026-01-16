@@ -82,8 +82,8 @@ const MOCK_MATCHES: SupabaseMatch[] = [
 	}
 ];
 
-const SUPABASE_URL = "https://lfmdvopbdldxisnobwqj.supabase.co";
-const API_KEY = "sb_publishable_jlz0JQrd76qt4mlnzs-uWA_WanyOsQR";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const API_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(SUPABASE_URL, API_KEY);
 

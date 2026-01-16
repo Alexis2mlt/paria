@@ -5,6 +5,9 @@ import Home from './src/pages/Home';
 import MatchList from './src/pages/MatchList';
 import MatchDetail from './src/pages/MatchDetail';
 
+import { AuthProvider, useAuth } from './src/context/AuthContext';
+import AuthModal from './components/AuthModal';
+
 const Logo = () => (
     <Link to="/" className="flex items-center">
         <img 
@@ -15,7 +18,13 @@ const Logo = () => (
     </Link>
 );
 
-const App = () => {
+const GlobalAuthModal = () => {
+    const { isAuthModalOpen, closeAuthModal } = useAuth();
+    if (!isAuthModalOpen) return null;
+    return <AuthModal onClose={closeAuthModal} onAuthSuccess={closeAuthModal} />;
+};
+
+const AppContent = () => {
     return (
         <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-paria/20">
             {/* Navigation */}
@@ -33,7 +42,18 @@ const App = () => {
                     <Route path="/match/:matchId" element={<MatchDetail />} />
                 </Routes>
             </main>
+
+            {/* Global Modals */}
+            <GlobalAuthModal />
         </div>
+    );
+};
+
+const App = () => {
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
     );
 };
 

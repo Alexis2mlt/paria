@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchMatchById, SupabaseMatch } from '../../services/supabaseService';
-import { analyzeMatch } from '../../services/geminiService';
 import { AnalysisState } from '../../types';
 import ChatDrawer from '../components/ChatDrawer';
+import { useAuth } from '../context/AuthContext';
+import LoginAlertModal from '../components/LoginAlertModal';
 
 // Format date to "15 Jan" format
 const formatDate = (dateString: string) => {
@@ -16,7 +17,6 @@ const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 };
-
 
 // Custom Markdown Formatter
 const FormattedText = ({ text }: { text: string }) => {
@@ -55,10 +55,12 @@ const FormattedText = ({ text }: { text: string }) => {
 };
 
 const MatchDetail = () => {
+    const { user } = useAuth();
     const { matchId } = useParams<{ matchId: string }>();
     const [match, setMatch] = useState<SupabaseMatch | null>(null);
     const [loading, setLoading] = useState(true);
     const [isChatOpen, setIsChatOpen] = useState(false);
+    const [showLoginAlert, setShowLoginAlert] = useState(false);
 
     // Analysis State
     const [analysisState, setAnalysisState] = useState<AnalysisState>(AnalysisState.IDLE);
@@ -83,6 +85,11 @@ const MatchDetail = () => {
     }, [analysisState]);
 
     const handleAnalyze = async (query: string) => {
+        if (!user) {
+            setShowLoginAlert(true);
+            return;
+        }
+
         setAnalysisState(AnalysisState.LOADING);
         setResult(null);
         setError(null);
@@ -90,8 +97,9 @@ const MatchDetail = () => {
         try {
             const token = localStorage.getItem('access_token');
             if (!token) {
-                // If no token, maybe we should prompt login, but for now just error specific message
-                throw new Error("Vous devez être connecté pour générer une prédiction.");
+                // If user object exists but no token locally (edge case), prompt login
+                setShowLoginAlert(true);
+                return;
             }
 
             const sport = match?.sport_id === 1 ? 'Football' : match?.sport_id === 2 ? 'Rugby' : 'Sport';
@@ -132,59 +140,6 @@ const MatchDetail = () => {
         }
     };
 
-    const cleanText = (text: string) => text.replace(/\*\*/g, '').replace(/__/g, '').replace(/#/g, '').trim();
-
-    const parseBlocks = (text: string) => {
-        const blocks = text.split(/BLOCK \d: /i).filter(b => b.trim());
-        const justificationPart = blocks[blocks.length - 1]?.split(/⬇️ JUSTIFICATION RAPIDE/i);
-        
-        if (justificationPart && justificationPart.length > 1) {
-            blocks[blocks.length - 1] = justificationPart[0];
-            return {
-                blocks: blocks.map(b => cleanText(b)),
-                justification: cleanText(justificationPart[1])
-            };
-        }
-        return { blocks: blocks.map(b => cleanText(b)), justification: '' };
-    };
-
-    const renderBlock = (blockText: string, index: number) => {
-        const lines = blockText.split('\n');
-        const title = index === 0 ? "Pari Sûr" : index === 1 ? "Pari Équilibré" : "Pari Audacieux";
-        const betLine = lines.find(l => l.toLowerCase().includes('pari :'))?.split(':')[1]?.trim() || "Analyse...";
-        const coteLine = lines.find(l => l.toLowerCase().includes('cote :'))?.split(':')[1]?.trim() || "N/A";
-        const confidenceLine = lines.find(l => l.toLowerCase().includes('confiance :'))?.split(':')[1]?.trim() || "0%";
-        const confidenceVal = parseInt(confidenceLine) || 50;
-
-        return (
-            <div key={index} className="border border-slate-800 rounded-2xl p-6 bg-slate-900 hover:border-paria/40 transition-all flex flex-col gap-4">
-                <div className="flex justify-between items-start">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-spartan italic">
-                        {title}
-                    </span>
-                    <div className="bg-paria text-slate-950 font-black px-2 py-0.5 rounded-md text-[10px]">
-                        COTE {coteLine}
-                    </div>
-                </div>
-                <div className="text-xl font-bold leading-tight text-white tracking-tight">
-                    {betLine}
-                </div>
-                <div className="mt-auto">
-                    <div className="flex justify-between items-end mb-2">
-                        <span className="text-[9px] font-black text-slate-600 uppercase tracking-tighter">Confidence</span>
-                        <span className="text-xs font-black text-paria">{confidenceLine}</span>
-                    </div>
-                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                        <div 
-                            className="h-full bg-paria transition-all duration-1000 ease-out" 
-                            style={{ width: `${confidenceVal}%` }}
-                        ></div>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
     if (loading) {
         return (
              <div className="flex items-center justify-center min-h-[50vh]">
@@ -202,6 +157,7 @@ const MatchDetail = () => {
 
     return (
         <div className="relative">
+            <LoginAlertModal isOpen={showLoginAlert} onClose={() => setShowLoginAlert(false)} />
             <ChatDrawer 
                 isOpen={isChatOpen} 
                 onClose={() => setIsChatOpen(false)} 
@@ -278,9 +234,8 @@ const MatchDetail = () => {
                             </div>
 
                             {/* Content */}
-                            {/* Content */}
                             <div className="mb-10 text-slate-300 leading-relaxed text-sm">
-                                <FormattedText text={result.text} />
+                                <FormattedText text={result?.text || ''} />
                             </div>
 
                             {/* Action Buttons */}
