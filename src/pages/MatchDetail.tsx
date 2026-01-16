@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchMatchById, SupabaseMatch } from '../../services/supabaseService';
+import { fetchMatchById, SupabaseMatch, extractLeague } from '../../services/supabaseService';
 import { AnalysisState } from '../../types';
 import ChatDrawer from '../components/ChatDrawer';
 import { useAuth } from '../context/AuthContext';
@@ -154,6 +154,7 @@ const MatchDetail = () => {
 
     // Determine sport name (basic check for now)
     const sportName = match.sport_id === 1 ? 'Football' : match.sport_id === 2 ? 'Rugby' : 'Sport';
+    const leagueName = extractLeague(match.data, match.sport_id);
 
     return (
         <div className="relative">
@@ -181,7 +182,7 @@ const MatchDetail = () => {
                         {match.home_name} <span className="text-slate-600 text-2xl align-middle mx-2">vs</span> {match.away_name}
                     </h1>
                     <p className="text-slate-400 font-medium">
-                        Ligue 1 • {formatDate(match.match_date)} à {formatTime(match.match_date)}
+                        {leagueName} • {formatDate(match.match_date)} à {formatTime(match.match_date)}
                     </p>
                 </div>
 

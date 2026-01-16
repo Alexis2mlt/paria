@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { fetchAllMatches, SupabaseMatch, extractLogos } from '../../services/supabaseService';
+import { fetchAllMatches, SupabaseMatch, extractLogos, extractLeague } from '../../services/supabaseService';
 
 // Format date to "15 Jan" format
 const formatDate = (dateString: string) => {
@@ -20,6 +20,16 @@ const MatchList = () => {
     const [matches, setMatches] = useState<SupabaseMatch[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
+    const [inputPage, setInputPage] = useState('');
+
+    const handleInputSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const page = parseInt(inputPage);
+        if (page >= 1 && page <= totalPages) {
+            handlePageChange(page);
+            setInputPage('');
+        }
+    };
 
     useEffect(() => {
         if (sportId) {
@@ -68,6 +78,7 @@ const MatchList = () => {
             <div className="space-y-4 mb-12">
                 {paginatedMatches.map((match) => {
                     const { homeLogo, awayLogo } = extractLogos(match.data);
+                    const league = extractLeague(match.data, match.sport_id);
                     return (
                         <Link 
                             key={match.id} 
@@ -77,7 +88,7 @@ const MatchList = () => {
                             {/* Header: Competition */}
                             <div className="px-6 py-3 border-b border-slate-800/50 bg-slate-900/50 flex justify-between items-center bg-gradient-to-r from-slate-900 via-slate-900 to-transparent">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-paria transition-colors">
-                                    LIGUE 1
+                                    {league}
                                 </span>
                                 <svg className="w-4 h-4 text-slate-600 group-hover:text-paria transform group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
@@ -122,22 +133,84 @@ const MatchList = () => {
                 })}
             </div>
 
-            {/* Pagination Controls - Simplified for now */}
+            {/* Pagination Controls */}
             {totalPages > 1 && (
-                <div className="flex justify-center gap-2">
-                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <button
-                            key={page}
-                            onClick={() => handlePageChange(page)}
-                            className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all font-bold text-sm ${
-                                currentPage === page
-                                    ? 'bg-paria text-slate-950 border-paria'
-                                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-paria hover:text-white'
-                            }`}
+                <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-8 pt-8 border-t border-slate-800/50">
+                    
+                    {/* Navigation Group */}
+                    <div className="flex items-center gap-2">
+                        {/* Prev */}
+                        <button 
+                            onClick={() => handlePageChange(currentPage - 1)} 
+                            disabled={currentPage === 1}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:border-paria disabled:opacity-50 disabled:hover:border-slate-800 transition-all"
                         >
-                            {page}
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
                         </button>
-                    ))}
+
+                        {/* First Pages (1, 2, 3) */}
+                        {[1, 2, 3].map(page => page <= totalPages && (
+                             <button
+                                key={page}
+                                onClick={() => handlePageChange(page)}
+                                className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all font-bold text-sm ${
+                                    currentPage === page
+                                        ? 'bg-paria text-slate-950 border-paria'
+                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-paria hover:text-white'
+                                }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Input Group */}
+                    <div className="flex items-center gap-3 bg-slate-900/50 p-1.5 rounded-xl border border-slate-800/50 backdrop-blur-sm">
+                        <span className="text-slate-500 text-xs font-bold uppercase px-2 tracking-wider">
+                            Page <span className="text-white">{currentPage}</span> / {totalPages}
+                        </span>
+                        <div className="h-4 w-px bg-slate-800"></div>
+                        <form onSubmit={handleInputSubmit} className="flex grid-cols-1">
+                            <input 
+                                type="number" 
+                                min="1" 
+                                max={totalPages}
+                                value={inputPage}
+                                onChange={(e) => setInputPage(e.target.value)}
+                                placeholder="Go..."
+                                className="w-16 bg-slate-800 text-white rounded-lg px-2 py-1.5 text-xs font-bold text-center outline-none focus:ring-1 focus:ring-paria/50 transition-all placeholder:text-slate-600"
+                            />
+                        </form>
+                    </div>
+
+                    {/* End Group */}
+                    <div className="flex items-center gap-2">
+                        {totalPages > 3 && (
+                             <>
+                                {totalPages > 4 && <span className="text-slate-600 font-black tracking-widest text-xs">...</span>}
+                                <button
+                                    onClick={() => handlePageChange(totalPages)}
+                                    className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all font-bold text-sm ${
+                                        currentPage === totalPages
+                                            ? 'bg-paria text-slate-950 border-paria'
+                                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-paria hover:text-white'
+                                    }`}
+                                >
+                                    {totalPages}
+                                </button>
+                             </>
+                        )}
+
+                        {/* Next */}
+                        <button 
+                            onClick={() => handlePageChange(currentPage + 1)} 
+                            disabled={currentPage === totalPages}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:border-paria disabled:opacity-50 disabled:hover:border-slate-800 transition-all"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+                        </button>
+                    </div>
+
                 </div>
             )}
         </div>

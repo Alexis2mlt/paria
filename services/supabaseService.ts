@@ -121,6 +121,38 @@ export const extractLogos = (matchData: string): { homeLogo: string, awayLogo: s
 	return { homeLogo, awayLogo };
 };
 
+export const extractLeague = (data: string, sportId: number): string => {
+	if (!data) {
+		if (sportId === 1) return 'LIGUE 1';
+		if (sportId === 2) return 'TOP 14';
+		return 'SPORT';
+	}
+
+	const text = data.toLowerCase();
+
+	// Check for Rugby leagues
+	if (text.includes('top14') || text.includes('top 14')) return 'TOP 14';
+	if (text.includes('pro d2') || text.includes('prod2')) return 'PRO D2';
+	if (text.includes('champions cup')) return 'CHAMPIONS CUP';
+	if (text.includes('challenge cup')) return 'CHALLENGE CUP';
+	if (text.includes('six nations') || text.includes('6 nations')) return '6 NATIONS';
+
+	// Check for Football leagues
+	if (text.includes('ligue 1') || text.includes('ligue1')) return 'LIGUE 1';
+	if (text.includes('ligue 2') || text.includes('ligue2')) return 'LIGUE 2';
+	if (text.includes('premier league')) return 'PREMIER LEAGUE';
+	if (text.includes('bundesliga')) return 'BUNDESLIGA';
+	if (text.includes('serie a')) return 'SERIE A';
+	if (text.includes('liga')) return 'LA LIGA';
+	if (text.includes('champions league') || text.includes('ldc')) return 'CHAMPIONS LEAGUE';
+
+	// Fallbacks
+	if (sportId === 1) return 'LIGUE 1';
+	if (sportId === 2) return 'TOP 14';
+
+	return 'COMPETITION';
+};
+
 // Auth Helper Functions
 export const signInUser = async (email: string) => {
 	// Note: The user provided a "grant_type=password" link which implies password login.
